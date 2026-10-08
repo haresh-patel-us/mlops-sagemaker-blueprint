@@ -1,22 +1,31 @@
-# Kubernetes GitOps Manifests
+# MLOps on Amazon SageMaker — starter blueprint
 
-Portfolio sample of the GitOps patterns I run on EKS: an ArgoCD
-app-of-apps structure, a Helm values file with production hardening
-(resource limits, PDB, HPA, pod security), and a default-deny
-NetworkPolicy template. Directory per app, environment overlays via
-Kustomize-style value files.
+Portfolio sample of an end-to-end SageMaker ML workflow: a training script
+(PyTorch), a SageMaker Pipeline definition, and a deployment sketch for a
+real-time endpoint behind autoscaling. Patterns I use on ML platforms:
+reproducible training jobs, model registry promotion, and infrastructure for
+both batch and online inference.
 
 ## Layout
 
-- `argocd/root-app.yaml` — app-of-apps that syncs every child app
-- `apps/web-api/values.yaml` — hardened Helm values for a sample service
-- `apps/web-api/templates/networkpolicy.yaml` — default-deny + allowlist egress
-- `apps/web-api/templates/pdb.yaml` — PodDisruptionBudget
+- `training/train.py` — PyTorch training script (SageMaker Script Mode)
+- `pipeline/pipeline.py` — SageMaker Pipelines: processing, training,
+  evaluation, register, deploy (conditional on accuracy)
+- `deployment/endpoint_config.py` — real-time endpoint + autoscaling policy
+
+## Run (AWS)
+
+```bash
+# Train
+python training/train.py --epochs 5
+
+# Build + run the pipeline
+python pipeline/pipeline.py
+```
 
 ## Patterns demonstrated
 
-- App-of-apps with automated sync, prune, and self-heal
-- Resource requests/limits on every container (no BestEffort in prod)
-- PDBs sized for rolling updates (maxUnavailable: 1)
-- Default-deny NetworkPolicies with explicit allowlists
-- Read-only root filesystem + non-root users in pod security context
+- Script-mode training jobs with explicit hyperparameters and metrics
+- Pipeline steps with caching, so re-runs skip unchanged stages
+- Model registry with approval workflow before endpoint deployment
+- Endpoint autoscaling on `SageMakerVariantInvocationsPerInstance`
